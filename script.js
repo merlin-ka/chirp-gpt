@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chirp-GPT
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      1.0
 // @description  Make Chat-GPT talk with a funny voice.
 // @author       merlin-ka (github.com/merlin-ka)
 // @match        https://chatgpt.com/*
@@ -9,28 +9,22 @@
 // @grant        none
 // ==/UserScript==
 
-const PLAY_INTERVAL = 80;
+const PLAY_INTERVAL = 75;
 const DETUNE = 500;
 
 const audioContext = new AudioContext();
 const gain = audioContext.createGain();
-gain.gain.value = 0;
-
-// if the script fails to add the UI elements, set this to true to stop it from trying
-let hasCreateUiFailed = false;
+gain.gain.value = 0.5;
+gain.connect(audioContext.destination);
 
 function createUi() {
     const header = document.querySelector("main div.sticky");
-
     if (!header) {
-        hasCreateUiFailed = true;
         return;
     }
 
     const accountButton = header.children[header.children.length - 1];
-
     if (!accountButton) {
-        hasCreateUiFailed = true;
         return;
     }
 
@@ -49,7 +43,7 @@ function createUi() {
     div.appendChild(slider);
 
     slider.addEventListener("input", (e) => {
-        gain.gain.value = slider.valueAsNumber;
+        gain.gain.value = slider.valueAsNumber / 100;
     });
 
     accountButton.insertAdjacentElement("beforebegin", div);
@@ -71,12 +65,12 @@ function playAudioBuffer(audioBuffer) {
     const source = audioContext.createBufferSource();
     source.buffer = audioBuffer;
     source.detune.value = Math.round(Math.random() * DETUNE);
-    source.connect(audioContext.destination);
+    source.connect(gain);
     source.start();
 }
 
 async function main() {
-    // const sounds = wavFiles.map(createAudioBuffer);
+    const sounds = await Promise.all(wavFiles.map(createAudioBuffer));
 
     // Play a sound when text is added to the response (detected by the length)
     let previousResponseLength = 0;
@@ -87,7 +81,7 @@ async function main() {
     const observer = new MutationObserver(() => {
         // first, check if the UI is visible
         // (which is not the case on page load and chat navigation)
-        if (!hasCreateUiFailed && document.querySelector("#chirp-gpt-ui") == null) {
+        if (document.querySelector("#chirp-gpt-ui") == null) {
             createUi();
         }
 
@@ -117,11 +111,19 @@ async function main() {
         previousPlayTime = now;
 
         const idx = Math.round(Math.random() * (sounds.length - 1));
-        sounds[idx].play();
+        playAudioBuffer(sounds[idx]);
     });
 
     observer.observe(document.body, { characterData: true, childList: true, subtree: true });
 }
+
+/**
+ * The Base64 encoded .wav files (inserted by the script build.py)
+ * @type {string[]}
+ */
+const wavFiles = [
+    // PLACE_SOUNDS_HERE
+];
 
 (function () {
     main();
