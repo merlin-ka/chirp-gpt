@@ -7,6 +7,8 @@
 // @match        https://chatgpt.com/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=chatgpt.com
 // @grant        none
+// @downloadUrl  https://raw.githubusercontent.com/merlin-ka/chirp-gpt/main/chirp-gpt.user.js
+// @updateUrl    https://raw.githubusercontent.com/merlin-ka/chirp-gpt/main/chirp-gpt.user.js
 // ==/UserScript==
 
 const PLAY_INTERVAL = 75;
